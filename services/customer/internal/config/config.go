@@ -23,15 +23,15 @@ type ServerConfig struct {
 
 type DatabaseConfig struct {
 	Host     string `mapstructure:"host"`
-	Port     string `mapstructure:"host"`
-	User     string `mapstructure:"host"`
-	Password string `mapstructure:"host"`
-	Name     string `mapstructure:"host"`
-	SSLMode  string `mapstructure:"host"`
+	Port     string `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	Name     string `mapstructure:"name"`
+	SSLMode  string `mapstructure:"ssl_mode"`
 }
 
 type GRPCConfig struct {
-	Port string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
 }
 
 func LoadConfig() (*Config, error) {
