@@ -36,14 +36,12 @@ type GRPCConfig struct {
 
 func LoadConfig() (*Config, error) {
 	// load the env file
-
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "development"
 	}
 
 	envFile := fmt.Sprintf(".env.%s", env)
-
 	if err := godotenv.Load(envFile); err != nil {
 		godotenv.Load()
 	}
