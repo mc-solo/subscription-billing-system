@@ -1,25 +1,36 @@
-package db
+package database
 
 import (
+	"context"
+	"fmt"
 	"log"
-	"os"
 	"time"
 
-	"github.com/mc-solo/subscription-billing-sys/services/customer/internal/models"
+	"github.com/golang-migrate/migrate/v4"
+	// "github.com/golang-migrate/migrate/v4/database/mysql"
+	"github.com/mc-solo/subscription-billing-sys/services/customer/internal/config"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-func Init() *gorm.DB {
-	dsn := os.Getenv("DB_DSN")
-	if dsn == "" {
-		log.Fatal("DSN env variable not set")
-	}
+type Database struct {
+	DB *gorm.DB
+}
 
-	// config GORM to use a custom loger to get the sql queries in dev
+func NewDatabase(cfg *config.DatabaseConfig) (*Database, error) {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		cfg.User,
+		cfg.Password,
+		cfg.Host,
+		cfg.Port,
+		cfg.Name,
+	)
+
+	// Custom GORM logger
 	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		log.New(log.Writer(), "\r\n", log.LstdFlags),
 		logger.Config{
 			SlowThreshold:             time.Second,
 			LogLevel:                  logger.Info,
@@ -28,20 +39,69 @@ func Init() *gorm.DB {
 		},
 	)
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	gormConfig := &gorm.Config{
 		Logger: newLogger,
-	})
+	}
 
+	db, err := gorm.Open(mysql.Open(dsn), gormConfig)
 	if err != nil {
-		log.Fatal("Failed to connect to db")
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// todo: replace with golang-migrate [for now i'll just use automigrate from gorm]
-
-	log.Println("Migrating database schema...")
-	if err := db.AutoMigrate(&models.User{}); err != nil {
-		log.Fatalf("Migration failed: %v", err)
+	// Get generic database object sql.DB to use its functions
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sql.DB from gorm: %w", err)
 	}
 
-	return db
+	// Set connection pool settings
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	// Test connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	log.Println("Database connection established successfully")
+	return &Database{DB: db}, nil
+}
+
+func (d *Database) Close() error {
+	sqlDB, err := d.DB.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Close()
+}
+
+// runs database migrations using golang-migrate
+func RunMigrations(migrationsPath string, cfg *config.DatabaseConfig) error {
+	dsn := fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s?multiStatements=true",
+		cfg.User,
+		cfg.Password,
+		cfg.Host,
+		cfg.Port,
+		cfg.Name,
+	)
+
+	m, err := migrate.New(
+		fmt.Sprintf("file://%s", migrationsPath),
+		dsn,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create migrate instance: %w", err)
+	}
+	defer m.Close()
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	log.Println("Migrations ran successfully")
+	return nil
 }
