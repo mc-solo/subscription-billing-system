@@ -10,7 +10,7 @@ database:
   port: "3306"
   user: "root"
   password: ""
-  name: "customer_db"
+  name: "subscription-billing-sys"
   ssl_mode: "disable"
 
 
