@@ -4,28 +4,29 @@
 DB_HOST ?= localhost
 DB_PORT ?= 3306
 DB_USER ?= root
-DB_NAME ?= customer-billing-sys
+DB_NAME ?= subscription-billing-sys
 DB_PASSWORD ?= 
 
 # migration paths
 MIGRATION_PATH ?= file://migrations
 
 # conn strings
-DB_DSN = mysql://$(DB_USER):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/$(DB_NAME)?charsetutf8mb4&parseTime=True&loc=Local
+# DB_DSN = mysql://$(DB_USER):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/$(DB_NAME)?charset=utf8mb4&parseTime=True&loc=Local
+DB_DSN = mysql://$(DB_USER):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/$(DB_NAME)?multiStatements=true
 GORM_DSN = $(DB_USER):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/$(DB_NAME)?charset=uft8mb4&parseTime=True&loc=Local
 
 
 # create db
 db-create:
 	@echo "Creating database $(DB_NAME)..."
-	@mysql -h $(DB_HOST) -p $(DB_PORT) -u $(DB_USER) -p$(DB_PASSWORD) -e "create database if not exists $(DB_NAME) character set utf8mb4 collate utf8mb4_unicode_ci"
+	@/opt/lampp/bin/mysql -h $(DB_HOST) -P $(DB_PORT) -u $(DB_USER) -p$(DB_PASSWORD) -e "create database if not exists \`$(DB_NAME)\` character set utf8mb4 collate utf8mb4_unicode_ci"
 	@echo "Database created successfully"
 
 
 # run migrations up
 migrate-up:
 	@echo "Running migrations up..."
-	@migrate -path migrations -database "$(DB_DSN)" up
+	@migrate -path ./migrations -database "$(DB_DSN)" up
 	@echo "Migrations completed successfully"
 
 
@@ -43,17 +44,19 @@ migrate-create:
 
 # reset database [drop, create, migrate]
 db-reset:
-	db-drop db-create migrate-up
+	$(MAKE) db-drop
+	$(MAKE) db-create
+	$(MAKE) migrate-up
 
 # test db conn
 test-db:
 	@echo "Testing database connection..."
-	@mysql -h $(DB_HOST) -P $(DB_PORT) -u $(DB_USER) -p$(DB_PASSWORD) -e "select 1;" $(DB_NAME) && echo "Connection successful"
+	@/opt/lampp/bin/mysql -h $(DB_HOST) -P $(DB_PORT) -u $(DB_USER) -p$(DB_PASSWORD) -e "select 1;" $(DB_NAME) && echo "Connection successful"
 
 # show migration status
 migrate-status:
 	@echo "Migration status:"
-	@migrate -path migrations -database "$(DB_DSN)" version
+	@migrate -path ./migrations -database "$(DB_DSN)" version
 
 # run the app
 run:
