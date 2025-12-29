@@ -1,7 +1,7 @@
 -- enable UUID functions if not exists
 create function if not exists UUID_TO_BIN(_uuid char(36))
 returns binary(16) deterministic
-return unhex(replace(_uuid, '-', ''))
+return unhex(replace(_uuid, '-', ''));
 
 create function if not exists BIN_TO_UUID(_bin binary(16))
 returns char(36) deterministic
