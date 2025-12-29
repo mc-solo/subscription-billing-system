@@ -61,6 +61,7 @@ run:
 
 
 # build the app
+build:
 	@go build -o /bin/subscription-billing-sys/cmd/api/main.go
 
 # install dependencies
