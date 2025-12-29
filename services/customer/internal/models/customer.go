@@ -24,7 +24,8 @@ type Customer struct {
 	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
-	// todo: define relationships if any
+	// relations
+	Subscriptions []Subscription `gorm:"foreignKey:CustomerID;references:ID" json:"subscriptions,omitempty"`
 }
 
 // sets uuid for as an ID type
