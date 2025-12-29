@@ -18,7 +18,7 @@ type Config struct {
 
 type ServerConfig struct {
 	Host string `mapstructure:"host"`
-	Port string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
 }
 
 type DatabaseConfig struct {
@@ -40,7 +40,7 @@ func LoadConfig() (*Config, error) {
 	if env == "" {
 		env = "development"
 	}
-
+	// print the env file here
 	envFile := fmt.Sprintf(".env.%s", env)
 	if err := godotenv.Load(envFile); err != nil {
 		godotenv.Load()

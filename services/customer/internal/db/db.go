@@ -7,12 +7,11 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	// "github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/mc-solo/subscription-billing-sys/services/customer/internal/config"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	"gorm.io/gorm/logger" //manages how gorm prints sql queries to consol
 )
 
 type Database struct {
