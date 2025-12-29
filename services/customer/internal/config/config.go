@@ -14,6 +14,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	GRPC     GRPCConfig
+	Auth     AuthConfig
 }
 
 type ServerConfig struct {
@@ -32,6 +33,26 @@ type DatabaseConfig struct {
 
 type GRPCConfig struct {
 	Port string `mapstructure:"port"`
+}
+
+type AuthConfig struct {
+	// jwt settings
+	JWTSecret      string `mapstructure:"jwt_secret"`
+	JWTExpiryHours int    `mapstructure:"jwt_expiry_hours"`
+
+	// password settings
+	BcryptCost        int `mapstructure:"bcrypt_cost"`
+	MinPasswordLength int `mapstructure:"min_password_length"`
+
+	// security settings
+	LockoutTreshold int `mapstructure:"lockout_treshold"`
+	LockoutDuration int `mapstructure:"lockout_duration"`
+
+	// email verification settings
+	VerificationTokenExpiry int `mapstructure:"verification_token_expiry"`
+
+	// password reset
+	ResetTokenExpiry int `mapstructure:"reset_token_expiry"`
 }
 
 func LoadConfig() (*Config, error) {
