@@ -14,4 +14,15 @@ database:
   ssl_mode: "disable"
 
 
+  auth:
+    jwt_secret: "value-to-be-changed-in-prod!"
+    jwt_expiry_hours: 24
+    bcrypt_cost: 12
+    min_password_length: 8
+    lockout_threshold: 5
+    lockout_duration_minutes: 15
+    verification_token_expiry_hours: 24
+    reset_token_expiry_minutes: 60
+
+
 
