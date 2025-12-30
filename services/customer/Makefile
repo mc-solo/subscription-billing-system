@@ -1,4 +1,4 @@
-.PHONY: migrate-up migrate-down migrate-create db-create db-drop test
+.PHONY: migrate-up migrate-down migrate-create db-create drop-db test
 
 # database config
 DB_HOST ?= localhost
@@ -22,6 +22,12 @@ db-create:
 	@/opt/lampp/bin/mysql -h $(DB_HOST) -P $(DB_PORT) -u $(DB_USER) -p$(DB_PASSWORD) -e "create database if not exists \`$(DB_NAME)\` character set utf8mb4 collate utf8mb4_unicode_ci"
 	@echo "Database created successfully"
 
+# drop db
+drop-db:
+	@echo "Dropping database $(DB_NAME)..."
+	@/opt/lampp/bin/mysql -h $(DB_HOST) -P $(DB_PORT) -u $(DB_USER) -p$(DB_PASSWORD) -e "drop database if exists \`$(DB_NAME)\`;"
+	@echo "Database dropped successfully"
+
 
 # run migrations up
 migrate-up:
@@ -44,7 +50,7 @@ migrate-create:
 
 # reset database [drop, create, migrate]
 db-reset:
-	$(MAKE) db-drop
+	$(MAKE) drop-db
 	$(MAKE) db-create
 	$(MAKE) migrate-up
 
