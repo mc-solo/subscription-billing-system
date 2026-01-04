@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,15 +34,6 @@ type Subscription struct {
 	Customer Customer `gorm:"foreignKey:CustomerID;references:ID" json:"customer,omitempty"`
 }
 
-type JSON map[string]interface{}
-
-func (j JSON) Value() (interface{}, error) {
-	return json.Marshal(j)
-}
-
-// TODO: unmarshal the raw data to our map
-// BeforeCreate hook
-
 func (s *Subscription) BeforeCreate(tx *gorm.DB) error {
 	if s.ID == "" {
 		s.ID = uuid.New().String()
@@ -51,7 +41,7 @@ func (s *Subscription) BeforeCreate(tx *gorm.DB) error {
 
 	// set default metadata if empty
 	if s.Metadata == nil {
-		s.Metadata = JSON{}
+		s.Metadata = make(JSON)
 	}
 
 	return nil
