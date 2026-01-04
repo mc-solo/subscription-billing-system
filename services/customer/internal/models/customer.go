@@ -17,6 +17,7 @@ const (
 
 type Customer struct {
 	ID        string         `gorm:"primaryKey;type:varchar(36)" json:"id"`
+	UserID    *string        `gorm:"varchar(36);null;index" json:"user_id,omitempty"`
 	Email     string         `gorm:"uniqueIndex;not null;type:varchar(255)" json:"email"`
 	Name      string         `gorm:"type:varchar(255)" json:"name"`
 	Status    CustomerStatus `gorm:"type:enum('active', 'inactive', 'suspended');default:'active'" json:"status"`
@@ -26,6 +27,7 @@ type Customer struct {
 
 	// relations
 	Subscriptions []Subscription `gorm:"foreignKey:CustomerID;references:ID" json:"subscriptions,omitempty"`
+	User          *User          `gorm:"foreignkey;UserID;references:ID" json:"user,omitempty"`
 }
 
 // sets uuid for as an ID type
