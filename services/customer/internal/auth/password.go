@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -58,7 +59,7 @@ func NewPasswordValidator(minLength int, strength PasswordStrength) *PasswordVal
 func (pv *PasswordValidator) Validate(password string) error {
 	// check the min len
 	if len(password) < pv.minLength {
-		return fmt.Errorf("%w: minimun %d characters required", ErrPasswordTooShort)
+		return fmt.Errorf("%w: minimun %d characters required", ErrPasswordTooShort, pv.minLength)
 	}
 
 	// check required char types
@@ -76,10 +77,8 @@ func (pv *PasswordValidator) Validate(password string) error {
 
 	if pv.requireNumber {
 		if !regexp.MustCompile(`[0-9]`).MatchString(password) {
-
+			return fmt.Errorf("%w: must contain at least one number", ErrPasswordTooWeak)
 		}
-
-		return fmt.Errorf("%w: must contain at least one number", ErrPasswordTooWeak)
 	}
 
 	if pv.requireSpecial {
@@ -182,4 +181,20 @@ func GenerateRandomPassword(length int) (string, error) {
 	})
 
 	return string(password), nil
+}
+
+// extracts info from bcrypt hash
+func GenerateHashInfo(hashedPassword string) (cost int, err error) {
+	if len(hashedPassword) < 7 || !strings.HasPrefix(hashedPassword, "$2a$") {
+		return 0, errors.New("invalid bcrypt hash format")
+	}
+
+	// extract the cost part (bytes 4-6: "12$")
+	costStr := hashedPassword[4:6]
+	cost, err = strconv.Atoi(costStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse bcrypt cost: %w", err)
+	}
+
+	return cost, nil
 }
