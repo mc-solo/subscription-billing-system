@@ -3,8 +3,11 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // custom errors for better error handling
@@ -108,4 +111,75 @@ func isCommonPassword(password string) bool {
 	}
 
 	return false
+}
+
+func HashPassword(password string, cost int) (string, error) {
+	// validate cost param [4-31]
+	if cost < bcrypt.MinCost || cost > bcrypt.MaxCost {
+		return "", fmt.Errorf("bcrypt cost must be between %d and %d", bcrypt.MinCost, bcrypt.MaxCost)
+	}
+
+	passwordBytes := []byte(password)
+
+	hashedBytes, err := bcrypt.GenerateFromPassword(passwordBytes, cost)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrHashingPassword, err)
+	}
+
+	// convert bytes back to strings for storage
+	return string(hashedBytes), nil
+}
+
+// compares a plaintext password with bcrypt hash
+func CheckPassword(password, hashedPassword string) error {
+	// convert bytes back to arrays
+	passwordBytes := []byte(password)
+	hashedBytes := []byte(hashedPassword)
+
+	err := bcrypt.CompareHashAndPassword(hashedBytes, passwordBytes)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidPassword, err)
+	}
+	return nil
+}
+
+// generate random pass [useful for initial user setup]
+func GenerateRandomPassword(length int) (string, error) {
+	if length < 8 {
+		return "", errors.New("password length must be at least 8 characters long")
+	}
+
+	// char sets
+	upper := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	lower := "abcdefghijklmnopqrstuvwxyz"
+	digits := "0123456789"
+	special := "!@#$%^&*()_+-=[]{}|;:,.<>?"
+	all := upper + lower + digits + special
+
+	bytes := make([]byte, length)
+
+	// read rand bytes
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random password: %w", err)
+	}
+
+	// covnert bytes to chars
+	password := make([]byte, length)
+	for i := range password {
+		password[i] = all[int(bytes[i])%len(all)]
+	}
+
+	// ensures at least one of each char type
+	password[0] = upper[int(bytes[0])%len(upper)]
+	password[1] = lower[int(bytes[1])%len(lower)]
+	password[2] = digits[int(bytes[2])%len(digits)]
+	password[3] = special[int(bytes[3])%len(special)]
+
+	// shuffle the password
+	rand.Shuffle(len(password), func(i, j int) {
+		password[i], password[j] = password[j], password[i]
+	})
+
+	return string(password), nil
 }
